@@ -99,3 +99,6 @@ bin/
 /dist/
 /nbdist/
 /.nb-gradle/
+
+docker/redis-data
+docker/postgresql-data

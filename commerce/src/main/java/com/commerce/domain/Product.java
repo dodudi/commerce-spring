@@ -35,7 +35,7 @@ public class Product {
     @Column(columnDefinition = "INTEGER CHECK (price >= 1000 AND price <= 100000)")
     private int price;
 
-    @Column(columnDefinition = "INTEGER CHECK (stock >= 1 AND stock <= 10000)")
+    @Column(columnDefinition = "INTEGER CHECK (stock >= 0 AND stock <= 10000)")
     private int stock;
 
     @Column(updatable = false)

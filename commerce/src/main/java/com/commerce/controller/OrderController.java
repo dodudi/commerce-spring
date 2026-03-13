@@ -6,11 +6,7 @@ import com.commerce.dto.OrderFilterRequest;
 import com.commerce.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -27,7 +23,7 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<OrderCreateResponse> createOrder(OrderCreateRequest request) {
+    public ResponseEntity<OrderCreateResponse> createOrder(@RequestBody OrderCreateRequest request) {
         OrderCreateResponse order = orderService.createOrder(request);
         return ResponseEntity.ok(order);
     }

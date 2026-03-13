@@ -39,12 +39,12 @@ public class OrderService {
     )
     @Transactional
     public OrderCreateResponse createOrder(OrderCreateRequest request) {
-        Member member = memberRepository.findById(request.getMemberId())
+        Member member = memberRepository.findById(request.memberId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원"));
 
         Order order = Order.create(member);
 
-        List<OrderCreateRequest.OrderItem> sortedItems = request.getOrderItems().stream()
+        List<OrderCreateRequest.OrderItem> sortedItems = request.orderItems().stream()
                 .sorted(Comparator.comparingLong(OrderCreateRequest.OrderItem::productId))
                 .toList();
 

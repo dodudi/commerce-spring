@@ -5,6 +5,7 @@ import com.commerce.domain.OrderStatus;
 import com.commerce.domain.Product;
 import com.commerce.dto.OrderCreateRequest;
 import com.commerce.dto.OrderCreateResponse;
+import com.commerce.dto.OrderFilterRequest;
 import com.commerce.event.PaymentRequestEvent;
 import com.commerce.repository.MemberRepository;
 import com.commerce.repository.ProductRepository;
@@ -12,11 +13,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import com.commerce.event.PaymentRequestEvent;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -154,5 +155,125 @@ class OrderServiceTest {
         assertThatThrownBy(() -> orderService.createOrder(request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("존재하지 않는 상품");
+    }
+
+    @Test
+    void 주문_목록_조회_필터_없음() {
+        // given
+        orderService.createOrder(new OrderCreateRequest(member.getId(), List.of(
+                new OrderCreateRequest.OrderItem(radioProduct.getId(), 1)
+        )));
+        orderService.createOrder(new OrderCreateRequest(member.getId(), List.of(
+                new OrderCreateRequest.OrderItem(phoneProduct.getId(), 1)
+        )));
+
+        // when
+        List<OrderCreateResponse> orders = orderService.getOrders(new OrderFilterRequest());
+
+        // then
+        assertThat(orders).hasSize(2);
+    }
+
+    @Test
+    void 주문_목록_조회_회원_필터() {
+        // given
+        Member other = memberRepository.save(Member.builder()
+                .username("other")
+                .nickname("other")
+                .build());
+
+        orderService.createOrder(new OrderCreateRequest(member.getId(), List.of(
+                new OrderCreateRequest.OrderItem(radioProduct.getId(), 1)
+        )));
+        orderService.createOrder(new OrderCreateRequest(other.getId(), List.of(
+                new OrderCreateRequest.OrderItem(phoneProduct.getId(), 1)
+        )));
+
+        OrderFilterRequest filter = new OrderFilterRequest();
+        filter.setMemberId(member.getId());
+
+        // when
+        List<OrderCreateResponse> orders = orderService.getOrders(filter);
+
+        // then
+        assertThat(orders).hasSize(1);
+        assertThat(orders.get(0).memberId()).isEqualTo(member.getId());
+    }
+
+    @Test
+    void 주문_목록_조회_상태_필터() {
+        // given
+        orderService.createOrder(new OrderCreateRequest(member.getId(), List.of(
+                new OrderCreateRequest.OrderItem(radioProduct.getId(), 1)
+        )));
+
+        OrderFilterRequest filter = new OrderFilterRequest();
+        filter.setStatus(OrderStatus.PENDING);
+
+        // when
+        List<OrderCreateResponse> orders = orderService.getOrders(filter);
+
+        // then
+        assertThat(orders).isNotEmpty();
+        assertThat(orders).allMatch(o -> o.status() == OrderStatus.PENDING);
+    }
+
+    @Test
+    void 주문_목록_조회_날짜_범위_필터_주문_포함() {
+        // given
+        Instant before = Instant.now().minusSeconds(5);
+
+        orderService.createOrder(new OrderCreateRequest(member.getId(), List.of(
+                new OrderCreateRequest.OrderItem(radioProduct.getId(), 1)
+        )));
+
+        Instant after = Instant.now().plusSeconds(5);
+
+        OrderFilterRequest filter = new OrderFilterRequest();
+        filter.setStartDate(before);
+        filter.setEndDate(after);
+
+        // when
+        List<OrderCreateResponse> orders = orderService.getOrders(filter);
+
+        // then
+        assertThat(orders).hasSize(1);
+        assertThat(orders.get(0).createdAt()).isBetween(before, after);
+    }
+
+    @Test
+    void 주문_목록_조회_시작날짜가_미래이면_결과_없음() {
+        // given
+        orderService.createOrder(new OrderCreateRequest(member.getId(), List.of(
+                new OrderCreateRequest.OrderItem(radioProduct.getId(), 1)
+        )));
+
+        OrderFilterRequest filter = new OrderFilterRequest();
+        filter.setStartDate(Instant.now().plusSeconds(60));
+
+        // when
+        List<OrderCreateResponse> orders = orderService.getOrders(filter);
+
+        // then
+        assertThat(orders).isEmpty();
+    }
+
+    @Test
+    void 주문_목록_조회_종료날짜가_과거이면_결과_없음() {
+        // given
+        Instant past = Instant.now().minusSeconds(60);
+
+        orderService.createOrder(new OrderCreateRequest(member.getId(), List.of(
+                new OrderCreateRequest.OrderItem(radioProduct.getId(), 1)
+        )));
+
+        OrderFilterRequest filter = new OrderFilterRequest();
+        filter.setEndDate(past);
+
+        // when
+        List<OrderCreateResponse> orders = orderService.getOrders(filter);
+
+        // then
+        assertThat(orders).isEmpty();
     }
 }

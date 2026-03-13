@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 
@@ -12,6 +13,7 @@ import java.time.Instant;
 @Getter
 @Table(name = "order_items")
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
+@EntityListeners(AuditingEntityListener.class)
 public class OrderItem {
 
     @Id

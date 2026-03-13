@@ -2,12 +2,17 @@ package com.commerce.controller;
 
 import com.commerce.dto.OrderCreateRequest;
 import com.commerce.dto.OrderCreateResponse;
+import com.commerce.dto.OrderFilterRequest;
 import com.commerce.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -15,6 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class OrderController {
 
     private final OrderService orderService;
+
+    @GetMapping
+    public ResponseEntity<List<OrderCreateResponse>> getOrders(@ModelAttribute OrderFilterRequest filter) {
+        return ResponseEntity.ok(orderService.getOrders(filter));
+    }
 
     @PostMapping
     public ResponseEntity<OrderCreateResponse> createOrder(OrderCreateRequest request) {

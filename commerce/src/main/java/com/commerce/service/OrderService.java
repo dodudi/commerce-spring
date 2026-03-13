@@ -1,13 +1,11 @@
 package com.commerce.service;
 
-import com.commerce.domain.Member;
-import com.commerce.domain.Order;
-import com.commerce.domain.OrderItem;
-import com.commerce.domain.Outbox;
-import com.commerce.domain.Product;
+import com.commerce.domain.*;
 import com.commerce.dto.OrderCreateRequest;
 import com.commerce.dto.OrderCreateResponse;
+import com.commerce.dto.OrderFilterRequest;
 import com.commerce.event.PaymentRequestEvent;
+import com.commerce.repository.OrderSpecification;
 import com.commerce.repository.MemberRepository;
 import com.commerce.repository.OrderRepository;
 import com.commerce.repository.OutboxRepository;
@@ -77,5 +75,12 @@ public class OrderService {
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("이벤트 직렬화 실패", e);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrderCreateResponse> getOrders(OrderFilterRequest filter) {
+        return orderRepository.findAll(OrderSpecification.withFilters(filter)).stream()
+                .map(OrderCreateResponse::from)
+                .toList();
     }
 }

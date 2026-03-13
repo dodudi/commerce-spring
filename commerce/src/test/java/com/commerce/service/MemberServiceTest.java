@@ -2,7 +2,7 @@ package com.commerce.service;
 
 import com.commerce.domain.Member;
 import com.commerce.dto.MemberCreateRequest;
-import com.commerce.dto.MemberCreateResponse;
+import com.commerce.dto.MemberResponse;
 import com.commerce.repository.MemberRepository;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -26,7 +26,7 @@ class MemberServiceTest {
         MemberCreateRequest memberCreateRequest = new MemberCreateRequest(username, nickname);
 
         // when
-        MemberCreateResponse member = memberService.createMember(memberCreateRequest);
+        MemberResponse member = memberService.createMember(memberCreateRequest);
 
         // then
         Assertions.assertThat(member.getUsername()).isEqualTo(username);

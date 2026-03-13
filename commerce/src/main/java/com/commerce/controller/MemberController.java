@@ -1,15 +1,14 @@
 package com.commerce.controller;
 
 import com.commerce.dto.MemberCreateRequest;
-import com.commerce.dto.MemberCreateResponse;
+import com.commerce.dto.MemberResponse;
 import com.commerce.service.MemberService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,10 +18,16 @@ public class MemberController {
     private final MemberService memberService;
 
     @PostMapping
-    public ResponseEntity<MemberCreateResponse> createMember(
+    public ResponseEntity<MemberResponse> createMember(
             @Valid @RequestBody MemberCreateRequest request
     ) {
-        MemberCreateResponse member = memberService.createMember(request);
+        MemberResponse member = memberService.createMember(request);
         return ResponseEntity.ok(member);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<MemberResponse>> getMembers() {
+        List<MemberResponse> members = memberService.getMembers();
+        return ResponseEntity.ok(members);
     }
 }

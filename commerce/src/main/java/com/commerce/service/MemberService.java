@@ -2,11 +2,13 @@ package com.commerce.service;
 
 import com.commerce.domain.Member;
 import com.commerce.dto.MemberCreateRequest;
-import com.commerce.dto.MemberCreateResponse;
+import com.commerce.dto.MemberResponse;
 import com.commerce.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -15,7 +17,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
 
     @Transactional
-    public MemberCreateResponse createMember(MemberCreateRequest request) {
+    public MemberResponse createMember(MemberCreateRequest request) {
         if (memberRepository.existsByUsername(request.getUsername())) {
             throw new IllegalArgumentException("생성할 수 없는 아이디 입니다");
         }
@@ -26,6 +28,12 @@ public class MemberService {
                 .build();
 
         member = memberRepository.save(member);
-        return MemberCreateResponse.from(member);
+        return MemberResponse.from(member);
+    }
+
+    public List<MemberResponse> getMembers() {
+        return memberRepository.findAll().stream()
+                .map(MemberResponse::from)
+                .toList();
     }
 }

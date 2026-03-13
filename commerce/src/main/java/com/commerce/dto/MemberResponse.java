@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public class MemberCreateResponse {
+public class MemberResponse {
 
     private final Long id;
 
@@ -14,8 +14,8 @@ public class MemberCreateResponse {
 
     private final String nickname;
 
-    public static MemberCreateResponse from(Member member) {
-        return new MemberCreateResponse(member.getId(), member.getUsername(), member.getNickname());
+    public static MemberResponse from(Member member) {
+        return new MemberResponse(member.getId(), member.getUsername(), member.getNickname());
     }
 
 }

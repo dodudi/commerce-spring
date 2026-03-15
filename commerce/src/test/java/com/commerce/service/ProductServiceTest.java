@@ -8,6 +8,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
@@ -63,5 +64,35 @@ class ProductServiceTest {
         Assertions.assertThatThrownBy(() -> productService.createProduct(request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("존재하지 않는 상품입니다");
+    }
+
+    @Test
+    void 제품생성_가격_범위초과_에러발생() {
+        // given
+        String name = "test";
+        String description = "test description";
+        int price = 1000000;
+        int stock = 10;
+
+        ProductCreateRequest request = new ProductCreateRequest(name, description, price, stock);
+
+        // when & then
+        Assertions.assertThatThrownBy(() -> productService.createProduct(request))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void 제품생성_재고_범위초과_에러발생() {
+        // given
+        String name = "test";
+        String description = "test description";
+        int price = 1000;
+        int stock = 1000000;
+
+        ProductCreateRequest request = new ProductCreateRequest(name, description, price, stock);
+
+        // when & then
+        Assertions.assertThatThrownBy(() -> productService.createProduct(request))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 }

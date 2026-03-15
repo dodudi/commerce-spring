@@ -1,5 +1,6 @@
 package com.payment.event;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.payment.dto.PaymentRequestEvent;
 import com.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
@@ -14,12 +15,29 @@ import reactor.core.scheduler.Schedulers;
 public class PaymentRequestConsumer {
 
     private final PaymentService paymentService;
+    private final ObjectMapper objectMapper;
 
     @KafkaListener(topics = "payment.request", groupId = "payment-group")
-    public void consume(PaymentRequestEvent event) {
+    public void consume(String message) {
+
+        PaymentRequestEvent event;
+
+        try {
+            event = objectMapper.readValue(message, PaymentRequestEvent.class);
+        } catch (Exception e) {
+            log.error("Kafka 메시지 역직렬화 실패: {}", message, e);
+            return;
+        }
+
         log.info("결제 요청 수신: orderId={}, amount={}", event.orderId(), event.amount());
-        paymentService.process(event)
-                .subscribeOn(Schedulers.boundedElastic())
-                .block();
+
+        try {
+            paymentService.process(event)
+                    .subscribeOn(Schedulers.boundedElastic())
+                    .block();
+        } catch (Exception e) {
+            log.error("결제 처리 실패: event={}", event, e);
+            throw e; // Kafka retry
+        }
     }
 }

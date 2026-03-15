@@ -7,6 +7,8 @@ import com.commerce.domain.Product;
 import com.commerce.repository.MemberRepository;
 import com.commerce.repository.OrderRepository;
 import com.commerce.repository.ProductRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,8 +36,10 @@ class PaymentResultConsumerTest {
     @Autowired
     private ProductRepository productRepository;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @MockitoBean
-    private KafkaTemplate<String, PaymentRequestEvent> kafkaTemplate;
+    private KafkaTemplate<String, String> kafkaTemplate;
 
     private Order order;
 
@@ -59,12 +63,13 @@ class PaymentResultConsumerTest {
     }
 
     @Test
-    void 결제_성공_수신시_주문_상태_COMPLETED() {
+    void 결제_성공_수신시_주문_상태_COMPLETED() throws JsonProcessingException {
         // given
         PaymentResultEvent event = new PaymentResultEvent(order.getId(), "결제 성공", OrderStatus.COMPLETED);
+        String message = objectMapper.writeValueAsString(event);
 
         // when
-        paymentResultConsumer.consume(event);
+        paymentResultConsumer.consume(message);
 
         // then
         Order updated = orderRepository.findById(order.getId()).orElseThrow();
@@ -72,12 +77,13 @@ class PaymentResultConsumerTest {
     }
 
     @Test
-    void 결제_실패_수신시_주문_상태_CANCELLED() {
+    void 결제_실패_수신시_주문_상태_CANCELLED() throws JsonProcessingException {
         // given
         PaymentResultEvent event = new PaymentResultEvent(order.getId(), "결제 실패", OrderStatus.CANCELLED);
+        String message = objectMapper.writeValueAsString(event);
 
         // when
-        paymentResultConsumer.consume(event);
+        paymentResultConsumer.consume(message);
 
         // then
         Order updated = orderRepository.findById(order.getId()).orElseThrow();
@@ -85,13 +91,14 @@ class PaymentResultConsumerTest {
     }
 
     @Test
-    void 존재하지_않는_주문_결제_결과_수신시_예외_발생() {
+    void 존재하지_않는_주문_결제_결과_수신시_예외_발생() throws JsonProcessingException {
         // given
         Long nonExistentOrderId = -1L;
         PaymentResultEvent event = new PaymentResultEvent(nonExistentOrderId, "결제 성공", OrderStatus.COMPLETED);
+        String message = objectMapper.writeValueAsString(event);
 
         // when & then
-        assertThatThrownBy(() -> paymentResultConsumer.consume(event))
+        assertThatThrownBy(() -> paymentResultConsumer.consume(message))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("존재하지 않는 주문");
     }

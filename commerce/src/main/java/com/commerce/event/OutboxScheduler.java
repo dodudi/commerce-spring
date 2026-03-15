@@ -2,7 +2,6 @@ package com.commerce.event;
 
 import com.commerce.domain.Outbox;
 import com.commerce.repository.OutboxRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -18,8 +17,7 @@ import java.util.List;
 public class OutboxScheduler {
 
     private final OutboxRepository outboxRepository;
-    private final KafkaTemplate<String, PaymentRequestEvent> kafkaTemplate;
-    private final ObjectMapper objectMapper;
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
     @Scheduled(fixedDelay = 5000)
     @Transactional
@@ -27,8 +25,7 @@ public class OutboxScheduler {
         List<Outbox> pendingList = outboxRepository.findByStatus(Outbox.OutboxStatus.PENDING);
         for (Outbox outbox : pendingList) {
             try {
-                PaymentRequestEvent event = objectMapper.readValue(outbox.getPayload(), PaymentRequestEvent.class);
-                kafkaTemplate.send(outbox.getTopic(), event).get(); // 동기 전송 (성공 확인 후 상태 변경)
+                kafkaTemplate.send(outbox.getTopic(), outbox.getPayload());
                 outbox.markPublished();
                 log.info("Outbox 발행 성공: outboxId={}", outbox.getId());
             } catch (Exception e) {
